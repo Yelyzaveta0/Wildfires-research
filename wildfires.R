@@ -5,6 +5,7 @@ library(dplyr)
 library(ggplot2)
 library(forecast)
 library(tidyr)
+library(tidyverse)
 #data_file <- read.csv("C:\\Users\\Лиза\\Downloads\\Data.csv", stringsAsFactors = FALSE)
 #View(data_file)
 
@@ -32,4 +33,4 @@ ts_data <- ts(alberta_human$Count, start = min(alberta_human$Year), frequency = 
 fit <- auto.arima(ts_data)
 
 fcast <- forecast(fit, h = 10)
-autoplot(fcast) + ggtitle("Alberta - Human activity forecast")
+autoplot(fcast) + autolayer(ts_data, series="Observed") + ggtitle("Alberta - Human activity forecast") + theme_minimal()
