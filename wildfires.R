@@ -65,3 +65,47 @@ plot(ts_data, main = "Actual vs Fitted")
 lines(fitted(fit), col = "red")
 legend("topleft", legend = c("Actual", "Fitted"), col = c("black", "red"), lty = 1)
 
+most_cause <- data_file_long %>%
+  filter(!is.na(Count), Count > 0) %>%
+  group_by(Jurisdiction, Year) %>%
+  mutate(is_most = Count == max(Count, na.rm = TRUE)) %>%
+  filter(is_most) %>%
+  select(Jurisdiction, Year, Count, Cause) %>%
+  arrange(Jurisdiction, Year)
+most_cause_summary <- most_cause %>%
+  group_by(Jurisdiction, Cause) %>%
+  summarise(
+    Years_dom = n(),
+    First_Year = min(Year),
+    Last_Year = max(Year), 
+    avg_most = mean(Count), 
+    .groups = "drop"
+  ) %>%
+  arrange(Jurisdiction, desc(Years_dom))
+print(most_cause_summary, n = 50)
+
+ggplot(most_cause, aes(x = Year, y = Jurisdiction, fill = Cause)) +
+  geom_tile(color = "white", size = 0.5) +
+  scale_fill_brewer(palette = "Set3") +
+  labs(title = "Dominant Wildfire Causes by Province and Year",
+       subtitle = "Most frequent cause of wildfires each year",
+       x = "Year", y = "Province", fill = "Cause") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom")
+
+
+cause_patterns <- most_cause %>%
+  group_by(Jurisdiction, Cause) %>%
+  summarise(Years_dom = n(), .groups = 'drop') %>%
+  complete(Jurisdiction, Cause, fill = list(Years_dom = 0))
+
+ggplot(cause_patterns, aes(x = Cause, y = Jurisdiction, fill = Years_dom)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Years_dom), color = "black", size = 3.5) +
+  scale_fill_gradient(low = "white", high = "steelblue") +
+  labs(title = "Heatmap of Wildfire Cause Dominance by Province",
+       subtitle = "Number of years each cause was the most frequent",
+       x = "Cause", y = "Province", fill = "Years Dominant") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
